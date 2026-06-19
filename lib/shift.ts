@@ -61,3 +61,13 @@ export function beforeWindow(ts: number, w: ShiftWindow): boolean {
 export function visibleAt(ts: number, w: ShiftWindow): boolean {
   return ts < w.toMs
 }
+
+/** Format an epoch-ms instant as an ISO 8601 string in a fixed `+HH:MM` offset. */
+export function toOffsetIso(ms: number, timezone: string): string {
+  if (!TZ_RE.test(timezone)) throw new Error(`Invalid timezone offset: ${timezone}`)
+  const sign = timezone[0] === "-" ? -1 : 1
+  const offMin = sign * (Number(timezone.slice(1, 3)) * 60 + Number(timezone.slice(4, 6)))
+  const local = new Date(ms + offMin * 60 * 1000)
+  const base = local.toISOString().slice(0, 19) // YYYY-MM-DDTHH:mm:ss
+  return `${base}${timezone}`
+}

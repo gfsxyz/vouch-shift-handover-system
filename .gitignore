@@ -11,6 +11,9 @@
 # testing
 /coverage
 
+# runtime extraction cache (the committed seed lives in lib/extraction/seed/)
+/.cache/
+
 # next.js
 /.next/
 /out/

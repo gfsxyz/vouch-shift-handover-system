@@ -1,0 +1,122 @@
+// Builds the committed "seed" extraction for the bundled night log.
+//
+// This captures the reference structured output for data/night-logs.md so the service and
+// tests run without a live API key (ADR 0008 caches extraction by content hash). Any UNSEEN
+// night log misses this cache and goes to the live model — the product still generalizes.
+//
+// Run: node scripts/seed-extraction.mjs
+// It fails loudly if any sourceText is not a real substring of the log (the same grounding
+// guard the runtime enforces), so the seed can never contain an un-anchorable claim.
+
+import { createHash } from "node:crypto"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
+const logPath = path.join(root, "data", "night-logs.md")
+const log = readFileSync(logPath, "utf8")
+
+const hash = createHash("sha256").update(log, "utf8").digest("hex").slice(0, 16)
+const normalize = (s) => s.replace(/\s+/g, " ").trim().toLowerCase()
+const haystack = normalize(log)
+
+const events = [
+  {
+    room: "210",
+    category: "occupancy",
+    status: "resolved",
+    guest: null,
+    summary: "Late check-in around 1am for the guest in room 210; smooth, deposit taken.",
+    sourceText: "One late check-in around 1am, gentleman in 210, all fine, deposit taken.",
+    flags: [],
+  },
+  {
+    room: "112",
+    category: "maintenance",
+    status: "unresolved",
+    guest: null,
+    summary:
+      "Maintenance inspected room 112's aircon: it's the compressor, the part must be ordered and will take a few days, so 112 stays out of order.",
+    sourceText:
+      "Room 112 aircon — maintenance finally came to look at it tonight. Bad news, he says it's the compressor and the part needs to be ordered in, will take a few days. So 112 stays out of order for now.",
+    flags: [],
+  },
+  {
+    room: null,
+    category: "facilities",
+    status: "unresolved",
+    guest: null,
+    summary:
+      "The 2nd-floor corridor leak near room 215 worsened (steady drip soaking the carpet); bucket and wet-floor sign placed, building management contacted but no one fixed it before shift end. Still not fixed, right outside a guest room.",
+    sourceText: "Still not fixed. Please chase this first thing, it's right outside a guest room.",
+    flags: ["urgent"],
+  },
+  {
+    room: "312",
+    category: "no_show",
+    status: "resolved",
+    guest: null,
+    summary:
+      "The previous night's guaranteed-booking no-show was charged one night per booking terms; relief staff considers it settled.",
+    sourceText:
+      "312 那个 no-show（昨晚的 guaranteed booking）— 我已经按 booking terms 帮他收了一晚的费用了，这件事 settle 了。",
+    flags: [],
+  },
+  {
+    room: null,
+    category: "connectivity",
+    status: "unresolved",
+    guest: null,
+    summary:
+      "An unidentified upper-floor room reported the wifi dropping around 3am; the room was never identified and there was no follow-up. Unconfirmed whether it resolved.",
+    sourceText:
+      "Someone called down from one of the upper floor rooms around 3am complaining the wifi kept dropping. I couldn't catch which room it was and the line cut off, they said they'd come back down if it was still bad but they never did, so I assume it sorted itself out.",
+    flags: ["unconfirmed"],
+  },
+  {
+    room: "309",
+    category: "deposit",
+    status: "unresolved",
+    guest: null,
+    summary:
+      "The room 309 deposit issue carried from Tuesday is still unsettled; guest arrived very late and was not chased, no deposit on file.",
+    sourceText:
+      "309 — the guy with the deposit issue from Tuesday is still not settled, he came in very late and I didn't want to chase him at 2am. Still no deposit on file. Passing it on again.",
+    flags: [],
+  },
+  {
+    room: "205",
+    category: "occupancy",
+    status: "unresolved",
+    guest: "Mr Chen",
+    summary:
+      "Overnight rounds found room 205 apparently vacated (door ajar, bed unslept, no luggage), but the system still shows the guest in-house. Conflict — reconcile before continuing to bill the room.",
+    sourceText:
+      "Did my rounds on the 2nd floor and noticed 205 had the door ajar, bed clearly not slept in, no luggage anywhere in the room. The system still shows Mr Chen in 205 as in-house, but it looks like nobody's been in there for a day or two.",
+    flags: ["contradicts_system"],
+  },
+  {
+    room: "208",
+    category: "safe_box",
+    status: "unresolved",
+    guest: null,
+    summary:
+      "Guest in 208 cannot open the in-room safe; passport and cash are locked inside and they check out early to catch a flight. Password reset failed; needs a locksmith or safe technician urgently.",
+    sourceText:
+      "208 房的客人刚才下来说房间的保险箱打不开了，他的护照和一些现金锁在里面，明天一早要退房赶飞机。试过重设密码也不行，要尽快找维修或保险箱公司来开，不然他走不了。",
+    flags: ["urgent"],
+  },
+]
+
+for (const ev of events) {
+  if (!haystack.includes(normalize(ev.sourceText))) {
+    throw new Error(`sourceText not found in log (would be dropped): ${ev.sourceText.slice(0, 60)}…`)
+  }
+}
+
+const outDir = path.join(root, "lib", "extraction", "seed")
+mkdirSync(outDir, { recursive: true })
+const outPath = path.join(outDir, `${hash}.json`)
+writeFileSync(outPath, JSON.stringify({ events }, null, 2) + "\n", "utf8")
+console.log(`wrote ${outPath} (${events.length} events, hash ${hash})`)
