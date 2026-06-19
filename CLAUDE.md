@@ -91,6 +91,20 @@ first-class field from the first line of code — retrofitting grounding later i
 - `GET /api/debug?date=YYYY-MM-DD` → full thread → event → evidence chain + decision records.
 - Minimal Next.js page renders the sections with an evidence drawer. In-memory processing (no DB); night-log extraction cached by content hash for reproducibility.
 
+# Implementation map (the code that realizes the ADRs)
+
+Built and tested (`pnpm test` → 39 passing; `pnpm dev`). Top-level pipeline is
+[`lib/pipeline.ts`](lib/pipeline.ts): loaders → [`lib/threads.ts`](lib/threads.ts) →
+[`lib/classify.ts`](lib/classify.ts) (via [`lib/state.ts`](lib/state.ts)) →
+[`lib/handover.ts`](lib/handover.ts). The one model step is [`lib/extraction/`](lib/extraction/)
+(Sonnet 4.6, Zod, content-hash cached) and runs live on **every** night log — sample or unseen —
+so a key is required to ingest the free-text log (no key → degrades to the json-only handover).
+Tests run offline by priming the cache from a fixture recorded from a real run (`tests/fixtures/`).
+Windowing is [`lib/shift.ts`](lib/shift.ts) (tested first). Category/thread-key rules
+live in [`lib/categories.ts`](lib/categories.ts). API in [`app/api/`](app/api/), view in
+[`app/page.tsx`](app/page.tsx). See [`README.md`](README.md) for the file-by-file table.
+**Conform to the ADRs; don't re-derive decisions here.**
+
 # Coding guidelines
 
 - **Prefer the simplest solution.** No persistence/DB unless it clearly simplifies things; in-memory is fine.
