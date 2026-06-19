@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "room": "210",
+      "category": "occupancy",
+      "status": "resolved",
+      "guest": null,
+      "summary": "Late check-in around 1am for room 210; all in order, deposit taken.",
+      "sourceText": "One late check-in around 1am, gentleman in 210, all fine, deposit taken.",
+      "flags": []
+    },
+    {
+      "room": "112",
+      "category": "maintenance",
+      "status": "unresolved",
+      "guest": null,
+      "summary": "Room 112 aircon compressor is faulty; part needs to be ordered, will take a few days. Room remains out of order. The original guest has been moved to room 115.",
+      "sourceText": "Room 112 aircon — maintenance finally came to look at it tonight. Bad news, he says it's the compressor and the part needs to be ordered in, will take a few days. So 112 stays out of order for now. The guest who was originally in there is fine, still in 115.",
+      "flags": []
+    },
+    {
+      "room": null,
+      "category": "facilities",
+      "status": "unresolved",
+      "guest": null,
+      "summary": "A leak in the 2nd floor corridor near room 215 worsened overnight — steady drip, carpet soaking. A bucket and wet floor sign were placed. Building management was contacted and said they'd send someone, but no one arrived before end of shift. Needs urgent follow-up first thing as it is directly outside a guest room.",
+      "sourceText": "The leak in the 2nd floor corridor (near 215) got worse tonight — there was a steady drip and the carpet was getting soaked, so I put a bucket down and moved the wet floor sign. I tried the maintenance line and the building management emergency number, eventually got through to building management who said they'd send someone but no one came before I left. Still not fixed. Please chase this first thing, it's right outside a guest room.",
+      "flags": [
+        "urgent"
+      ]
+    },
+    {
+      "room": "312",
+      "category": "no_show",
+      "status": "resolved",
+      "guest": null,
+      "summary": "Room 312 had a guaranteed booking no-show from the previous night. One night's charge has been applied per booking terms; matter is settled.",
+      "sourceText": "312 那个 no-show（昨晚的 guaranteed booking）— 我已经按 booking terms 帮他收了一晚的费用了，这件事 settle 了。",
+      "flags": []
+    },
+    {
+      "room": null,
+      "category": "connectivity",
+      "status": "unresolved",
+      "guest": null,
+      "summary": "A guest called from an upper floor room around 3am reporting intermittent wifi drops. The room number could not be identified and the line cut off. The guest did not call back, so the writer assumes it resolved itself, but this is unconfirmed.",
+      "sourceText": "Someone called down from one of the upper floor rooms around 3am complaining the wifi kept dropping. I couldn't catch which room it was and the line cut off, they said they'd come back down if it was still bad but they never did, so I assume it sorted itself out.",
+      "flags": [
+        "unconfirmed"
+      ]
+    },
+    {
+      "room": "309",
+      "category": "deposit",
+      "status": "unresolved",
+      "guest": null,
+      "summary": "Guest in room 309 has an outstanding deposit issue carried over from Tuesday. Guest returned very late; writer did not chase at 2am. No deposit on file. Being passed on again for follow-up.",
+      "sourceText": "309 — the guy with the deposit issue from Tuesday is still not settled, he came in very late and I didn't want to chase him at 2am. Still no deposit on file. Passing it on again.",
+      "flags": []
+    },
+    {
+      "room": "205",
+      "category": "occupancy",
+      "status": "pending",
+      "guest": "Mr Chen",
+      "summary": "Room 205 was found with door ajar, bed unslept in, and no luggage present during rounds. System still shows Mr Chen as in-house. Writer suspects he may have checked out without it being recorded, possibly a day or two ago. Reconciliation needed before further billing.",
+      "sourceText": "Did my rounds on the 2nd floor and noticed 205 had the door ajar, bed clearly not slept in, no luggage anywhere in the room. The system still shows Mr Chen in 205 as in-house, but it looks like nobody's been in there for a day or two. Flagging in case he checked out early and it never got recorded — someone should reconcile this before we keep billing him for the room.",
+      "flags": [
+        "contradicts_system",
+        "unconfirmed"
+      ]
+    },
+    {
+      "room": "208",
+      "category": "safe_box",
+      "status": "unresolved",
+      "guest": null,
+      "summary": "Guest in room 208 came to the desk reporting the in-room safe cannot be opened. Passport and cash are locked inside. Guest has an early checkout tomorrow to catch a flight. Password reset was attempted but failed. Maintenance or a safe technician needs to be called urgently.",
+      "sourceText": "208 房的客人刚才下来说房间的保险箱打不开了，他的护照和一些现金锁在里面，明天一早要退房赶飞机。试过重设密码也不行，要尽快找维修或保险箱公司来开，不然他走不了。",
+      "flags": [
+        "urgent"
+      ]
+    }
+  ]
+}
