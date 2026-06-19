@@ -12,16 +12,27 @@ Built for the Vouch Builder Test. The *why* behind every decision lives in
 
 ```bash
 pnpm install
-pnpm test          # 39 tests — windowing, threading, reconciliation, injection, grounding
-pnpm dev           # http://localhost:3000
+cp .env.example .env.local          # then add your key (see below)
+pnpm dev                            # http://localhost:3000
 ```
 
-The bundled night log ships with a **committed extraction seed**, so the service runs
-**without an API key**. To re-extract (or process a new log), set a key:
+### The API key
+
+Night-log extraction is **always a real Claude Sonnet 4.6 call** — there is no pre-baked
+extraction. The bundled sample is processed exactly like any unseen log, so the service
+needs a key to ingest the free-text log:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # night-log extraction uses claude-sonnet-4-6, temp 0
+# .env.local  (gitignored; Next.js auto-loads it)
+ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+Without a key the structured (`events.json`) pipeline still produces a handover; the
+free-text shift is reported as **not ingested** in `warnings` (graceful degradation, ADR 0003).
+
+`pnpm test` runs **offline and deterministic** (39 tests) by priming the cache from a fixture
+**recorded from a real Sonnet run** ([tests/fixtures/nightlog-extraction.json](tests/fixtures/nightlog-extraction.json)) —
+the production code never reads it.
 
 ## API
 
@@ -92,8 +103,16 @@ never guest content. The same records are served by `/api/debug`.
 
 ## Deploy
 
-Next.js on Vercel. Set `ANTHROPIC_API_KEY` to enable live extraction of unseen logs (the
-bundled sample works without it via the seed). In-memory processing, no database.
+Next.js on Vercel. Set `ANTHROPIC_API_KEY` (the extraction step calls Sonnet 4.6 for every
+night log, sample or unseen). In-memory processing, no database; extraction results are
+cached in-process by content hash, and the cache only ever holds outputs of a real model run.
+
+## Re-recording the extraction fixture
+
+The offline test fixture is a recording of a real Sonnet run. To refresh it after changing the
+extraction prompt or schema, clear the cache and re-run extraction with a key set, then save
+the result to `tests/fixtures/nightlog-extraction.json` (it is validated against the Zod schema
+and the grounding check before it is written).
 
 ## Layout
 
