@@ -16,3 +16,4 @@ You have access to specialized engineering playbooks located in your workspace f
 
 - **AI SDK Skill (`.agents/skills/aisdk/`):** Use this for Vercel AI SDK implementations, streaming architecture, and frontend chat components.
 - **Grill Me Skill (`.agents/skills/grill-me-with-dos/`):** Use this when requested to stress-test code, hunt for edge cases, or aggressively review architecture.
+- **Shadcn Skill (`.agents/skills/shadcn/`):** Use this for Shadcn components and blocks implementations.
