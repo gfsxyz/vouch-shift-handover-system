@@ -8,6 +8,22 @@ into one action-first picture, with **every line traceable to source evidence**.
 Built for the Vouch Builder Test. The *why* behind every decision lives in
 [`DECISIONS.md`](DECISIONS.md) and the [ADRs](docs/adr/README.md); this README is how to run it.
 
+## Live
+
+**Deployed:** https://vouch-shift-handover-system.vercel.app
+
+```bash
+# the curl target — a grounded handover for the 29→30 May shift
+curl "https://vouch-shift-handover-system.vercel.app/api/handover?date=2026-05-30"
+
+# the full thread → event → evidence chain + decision records
+curl "https://vouch-shift-handover-system.vercel.app/api/debug?date=2026-05-30"
+```
+
+Open the root URL for the rendered report. Try `?date=2026-05-28` (the free-text shift) and
+`?date=2026-05-29` (the 312 no-show flips from *resolved tonight* to *contested* as the guest
+dispute lands the next night).
+
 ## Quickstart
 
 ```bash
