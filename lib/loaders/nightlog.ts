@@ -33,6 +33,12 @@ export interface NightLogLoad {
 
 const normalizeWs = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
 
+/** Grounding guard (ADR 0004): a snippet must really occur in the log to be admitted. */
+export function isGrounded(logText: string, snippet: string): boolean {
+  if (!snippet) return false
+  return normalizeWs(logText).includes(normalizeWs(snippet))
+}
+
 const INJECTION_RE =
   /system note to the|ignore (all|other|previous)|report .*all clear|mark it approved|goodwill credit/
 
