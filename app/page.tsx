@@ -6,7 +6,7 @@ import Link from "next/link"
 
 import { DEFAULT_DATE, isValidDate } from "@/lib/api"
 import { buildHandover } from "@/lib/pipeline"
-import type { Category, EventFlag, HandoverItem } from "@/lib/types"
+import type { EventFlag, HandoverItem } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
