@@ -1,12 +1,13 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  // The pipeline reads the bundled sample data at runtime (ADR 0008, in-memory, no DB).
-  // Ensure those files ship inside the serverless functions.
+  // The pipeline reads the bundled sample data + committed extraction recordings at runtime
+  // (ADR 0008, in-memory, no DB). Shipping the recordings is what keeps a known log a cache
+  // hit on stateless cold starts — no model call, no per-request cost.
   outputFileTracingIncludes: {
-    "/": ["./data/**"],
-    "/api/handover": ["./data/**"],
-    "/api/debug": ["./data/**"],
+    "/": ["./data/**", "./lib/extraction/recorded/**"],
+    "/api/handover": ["./data/**", "./lib/extraction/recorded/**"],
+    "/api/debug": ["./data/**", "./lib/extraction/recorded/**"],
   },
 }
 

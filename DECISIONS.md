@@ -22,6 +22,7 @@ links to the full Architecture Decision Record under [`docs/adr/`](docs/adr/). T
 | 9   | Night-log extraction uses **Claude Sonnet 4.6** (`claude-sonnet-4-6`, temp 0, Zod)                               | [ADR 0009](docs/adr/0009-extraction-model.md)                     |
 | 10  | **"pending" routed by substance** (category + grounding completeness), not by label                              | [ADR 0010](docs/adr/0010-pending-status-routing.md)               |
 | 11  | Decision logs as **stdout JSON lines + `/api/debug`** (hotel/night/issue/why)                                    | [ADR 0011](docs/adr/0011-structured-decision-logging.md)          |
+| 12  | **Durable extraction cache** via committed real-run recordings (cheap + stateless-safe; unseen logs still live)   | [ADR 0012](docs/adr/0012-durable-extraction-cache.md)             |
 
 ---
 
@@ -33,12 +34,17 @@ filled in as decisions land; sections marked _pending_ are completed during/afte
 **Built:** a deterministic reconciliation engine (shift windowing → `(room, category)`
 threading across both sources → per-thread state machine → window classification), an
 evidence-first handover assembler with a fail-closed grounding pass, a single Sonnet 4.6
-extraction step (Zod, temp 0, content-hash cached, injection-hardened) that runs on **every**
-night log — the bundled sample is processed exactly as an unseen one — `GET /api/handover`
+extraction step (Zod, temp 0, injection-hardened) cached by **content hash**, `GET /api/handover`
 and `GET /api/debug`, a server-rendered view with per-item evidence drawers, structured
 per-thread decision logs to stdout, and a 39-test suite (windowing first, then threading,
-reconciliation, contradictions, injection, and grounding/fail-closed). Tests run offline by
-priming the cache from a fixture **recorded from a real Sonnet run**; production never reads it.
+reconciliation, contradictions, injection, and grounding/fail-closed).
+
+Extraction is deterministic (temp 0), so a given log's result never changes. A **recording of
+the real Sonnet run** for the bundled log is committed (`lib/extraction/recorded/<hash>.json`)
+and ships in the deployment bundle, so a known log is a cache hit on every (stateless) cold
+start — no model call, no per-request cost — while an **unseen** log misses the hash and is
+extracted live. The recording is a genuine model output, not a hand-authored stand-in, and the
+test suite reads it through the same cache path production uses (no key, no fixture priming).
 
 **Skipped by design.** The brief is explicit that volume, visual polish, and "whether you
 finish" are *not* being tested, and the graded qualities are normalization, reconciliation,

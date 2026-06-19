@@ -32,23 +32,32 @@ cp .env.example .env.local          # then add your key (see below)
 pnpm dev                            # http://localhost:3000
 ```
 
-### The API key
+### Extraction, the API key, and cost
 
-Night-log extraction is **always a real Claude Sonnet 4.6 call** — there is no pre-baked
-extraction. The bundled sample is processed exactly like any unseen log, so the service
-needs a key to ingest the free-text log:
+Night-log extraction is a real Claude Sonnet 4.6 call, cached by **content hash**. Because
+extraction is deterministic (temperature 0), a given log's result never changes — so re-calling
+the model per request would be pure waste, and on stateless serverless (Vercel) it's pure
+**cost**: every cold start has an empty in-memory cache and a read-only disk, so it would
+re-bill on every request.
+
+To avoid that, a **recording of the real Sonnet run** for the bundled log is committed under
+[`lib/extraction/recorded/`](lib/extraction/recorded/) (content-addressed, `<hash>.json`). It
+ships inside the deployment bundle (read-only but readable), so a known log is a **cache hit on
+every cold start — no model call, no per-request cost**. An **unseen** log (different content
+hash) misses the cache and is extracted live, which needs a key:
 
 ```bash
 # .env.local  (gitignored; Next.js auto-loads it)
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Without a key the structured (`events.json`) pipeline still produces a handover; the
-free-text shift is reported as **not ingested** in `warnings` (graceful degradation, ADR 0003).
+If a log is neither recorded nor extractable (no key), the structured (`events.json`) pipeline
+still produces a handover and the free-text shift is reported as **not ingested** in `warnings`
+(graceful degradation, ADR 0003).
 
-`pnpm test` runs **offline and deterministic** (39 tests) by priming the cache from a fixture
-**recorded from a real Sonnet run** ([tests/fixtures/nightlog-extraction.json](tests/fixtures/nightlog-extraction.json)) —
-the production code never reads it.
+`pnpm test` runs **offline and deterministic** (39 tests): the pipeline reads the committed
+recording through the normal cache path — the same path production uses — so no key and no
+test-only fixture priming are needed.
 
 ## API
 
@@ -119,16 +128,20 @@ never guest content. The same records are served by `/api/debug`.
 
 ## Deploy
 
-Next.js on Vercel. Set `ANTHROPIC_API_KEY` (the extraction step calls Sonnet 4.6 for every
-night log, sample or unseen). In-memory processing, no database; extraction results are
-cached in-process by content hash, and the cache only ever holds outputs of a real model run.
+Next.js on Vercel. In-memory processing, no database. Set `ANTHROPIC_API_KEY` so **unseen**
+night logs can be extracted live; the bundled sample is served from its committed recording, so
+it costs nothing per request even on cold starts. The cache only ever holds outputs of a real
+model run.
 
-## Re-recording the extraction fixture
+## Re-recording the extraction
 
-The offline test fixture is a recording of a real Sonnet run. To refresh it after changing the
-extraction prompt or schema, clear the cache and re-run extraction with a key set, then save
-the result to `tests/fixtures/nightlog-extraction.json` (it is validated against the Zod schema
-and the grounding check before it is written).
+The committed recording under `lib/extraction/recorded/<hash>.json` is the real Sonnet output
+for the bundled log. To refresh it after changing the extraction prompt or schema: delete that
+file, run with a key set so the next request extracts live (it's validated against the Zod
+schema and the grounding check), then copy the result the run writes to
+`.cache/extraction/<hash>.json` into `lib/extraction/recorded/`. The filename hash is the
+sha256 (first 16 hex) of the night-log content, so editing the log invalidates the recording
+automatically and triggers a fresh live extraction.
 
 ## Layout
 

@@ -20,5 +20,6 @@ Status values: `accepted`, `superseded by ADR-XXXX`, `proposed`.
 | [0009](0009-extraction-model.md) | Extraction model: Claude Sonnet 4.6 | accepted |
 | [0010](0010-pending-status-routing.md) | Route "pending" events by substance | accepted |
 | [0011](0011-structured-decision-logging.md) | Decision logs: stdout JSON + /api/debug | accepted |
+| [0012](0012-durable-extraction-cache.md) | Durable extraction cache via committed recordings | accepted |
 
 See also the [glossary](../glossary.md) for the vocabulary these ADRs assume.

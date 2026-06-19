@@ -29,7 +29,7 @@ the system works the way it does. Before implementing or altering behavior:
 
 | Doc | What it is |
 | --- | --- |
-| [`docs/adr/README.md`](docs/adr/README.md) | Index of all 11 ADRs |
+| [`docs/adr/README.md`](docs/adr/README.md) | Index of all 12 ADRs |
 | [`docs/adr/`](docs/adr/) | One ADR per decision — Context / Decision / Options rejected / Consequences |
 | [`DECISIONS.md`](DECISIONS.md) | Reviewer-facing summary + the brief's required sections |
 | [`docs/glossary.md`](docs/glossary.md) | Shared vocabulary (shift window, thread, evidence, contested, …) |
@@ -40,7 +40,7 @@ the system works the way it does. Before implementing or altering behavior:
 - **Do not silently change a decision.** If a new ambiguity or a reason to revise an ADR comes up, surface it (grill the user via `.agents/skills/grill-with-docs/`), then record it — supersede the old ADR with a new one and add a `DECISIONS.md` row. Don't edit accepted ADRs in place except to mark them `superseded`.
 - When you make any new decision, **write the next ADR** rather than leaving it implicit.
 
-# The 11 decisions (one-line each → full ADR)
+# The 12 decisions (one-line each → full ADR)
 
 1. **Shift/date semantics** — `?date=D` = the morning the handover is *for*; window `[(D-1) 23:00, D 07:00)` `+08:00`. → [0001](docs/adr/0001-shift-and-date-semantics.md)
 2. **Thread identity = (room, category)** — splits 309's two issues; threads roomless ones; join is rule-based. → [0002](docs/adr/0002-issue-thread-identity.md)
@@ -53,6 +53,7 @@ the system works the way it does. Before implementing or altering behavior:
 9. **Extraction model = Claude Sonnet 4.6** (`claude-sonnet-4-6`, temp 0, Zod via AI SDK `generateObject`). → [0009](docs/adr/0009-extraction-model.md)
 10. **"pending" routed by substance** — category + grounding completeness, not the raw label. → [0010](docs/adr/0010-pending-status-routing.md)
 11. **Decision logs = stdout JSON lines + `/api/debug`** (hotel / night / issue / why). → [0011](docs/adr/0011-structured-decision-logging.md)
+12. **Durable extraction cache** — commit a real-run recording per log hash so known logs are free cache hits on stateless cold starts; unseen logs still extract live. → [0012](docs/adr/0012-durable-extraction-cache.md)
 
 # Non-negotiable rules (the part the brief cares about most)
 
@@ -97,10 +98,11 @@ Built and tested (`pnpm test` → 39 passing; `pnpm dev`). Top-level pipeline is
 [`lib/pipeline.ts`](lib/pipeline.ts): loaders → [`lib/threads.ts`](lib/threads.ts) →
 [`lib/classify.ts`](lib/classify.ts) (via [`lib/state.ts`](lib/state.ts)) →
 [`lib/handover.ts`](lib/handover.ts). The one model step is [`lib/extraction/`](lib/extraction/)
-(Sonnet 4.6, Zod, content-hash cached) and runs live on **every** night log — sample or unseen —
-so a key is required to ingest the free-text log (no key → degrades to the json-only handover).
-Tests run offline by priming the cache from a fixture recorded from a real run (`tests/fixtures/`).
-Windowing is [`lib/shift.ts`](lib/shift.ts) (tested first). Category/thread-key rules
+(Sonnet 4.6, Zod, content-hash cached). The bundled log is served from a committed recording of
+a real run (`lib/extraction/recorded/<hash>.json`) so it's a cache hit on stateless cold starts
+(no model call, no cost); an unseen log misses the hash and is extracted live (needs a key; no
+key → json-only handover). Tests read the recording through the normal cache path (offline, no
+priming). Windowing is [`lib/shift.ts`](lib/shift.ts) (tested first). Category/thread-key rules
 live in [`lib/categories.ts`](lib/categories.ts). API in [`app/api/`](app/api/), view in
 [`app/page.tsx`](app/page.tsx). See [`README.md`](README.md) for the file-by-file table.
 **Conform to the ADRs; don't re-derive decisions here.**

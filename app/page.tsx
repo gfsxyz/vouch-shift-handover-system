@@ -122,6 +122,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
               <Link
                 key={d}
                 href={`/?date=${d}`}
+                prefetch={false}
                 className={`rounded px-2 py-1 text-xs ${d === h.shiftDate ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}
               >
                 {d}
@@ -131,8 +132,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
         </div>
         <p className="text-xs text-muted-foreground">
           Shift {h.window.from} → {h.window.to}. Reconciled across nights; every line traces to source
-          evidence. <Link className="underline" href={`/api/handover?date=${h.shiftDate}`}>JSON</Link>{" · "}
-          <Link className="underline" href={`/api/debug?date=${h.shiftDate}`}>debug</Link>
+          evidence. <a className="underline" href={`/api/handover?date=${h.shiftDate}`}>JSON</a>{" · "}
+          <a className="underline" href={`/api/debug?date=${h.shiftDate}`}>debug</a>
         </p>
         {h.warnings.length > 0 && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
