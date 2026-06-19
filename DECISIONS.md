@@ -40,12 +40,33 @@ per-thread decision logs to stdout, and a 39-test suite (windowing first, then t
 reconciliation, contradictions, injection, and grounding/fail-closed). Tests run offline by
 priming the cache from a fixture **recorded from a real Sonnet run**; production never reads it.
 
-**Skipped by design** (per brief — "we are NOT testing" volume/polish/auth): authentication,
-accounts, multi-hotel routing, any database (in-memory only), scaling/infra, and visual
-polish. Also deliberately **not** done: model-written prose (the output is templated from
-grounded fields so it can't invent), and parsing the night-log's shift date from prose (it's
-supplied to the loader as data, which is how real logs would carry it). The budget went where
-the brief said it cares most: reconciliation and grounding.
+**Skipped by design.** The brief is explicit that volume, visual polish, and "whether you
+finish" are *not* being tested, and the graded qualities are normalization, reconciliation,
+grounding, and judgment. So the budget went there, and the following were consciously left out
+— each is an additive, reversible hardening step, not a hole in the core:
+
+- **No web-app authentication / accounts / login.** Access control is orthogonal to the
+  handover logic and would, in production, live at the edge (Vouch's existing SSO/gateway), not
+  in this service. Adding it here spends budget on something the brief isn't grading.
+- **No API protection (no bearer token / API key on `/api/handover` or `/api/debug`).** The
+  endpoints are intentionally open so they can be hit with the plain `curl` the brief asks for
+  as a deliverable. In production they'd sit behind the same auth as everything else, and
+  `/api/debug` in particular — which exposes full evidence including verbatim guest content —
+  would be access-restricted, not public.
+- **No database / persistence (SQLite or otherwise).** In-memory only ([ADR 0008](docs/adr/0008-delivery-surface-and-reproducibility.md)).
+  The week of data is bundled and processing is deterministic, so re-deriving a handover on each
+  request is cheap and reproducible; a DB would add operational surface without improving any
+  graded quality. The only state is an in-process extraction cache.
+- **No UI polish and no action buttons.** The view is a deliberately plain, read-only
+  "report" — sections plus evidence drawers, no styling beyond the theme, and **no** controls to
+  acknowledge / resolve / charge / approve. Utility over beauty, but also a *safety* choice: a
+  read-only surface has no side-effecting action that a tired operator — or an injected "apply a
+  SGD 1000 credit" note — could ever trigger ([ADR 0007](docs/adr/0007-prompt-injection-handling.md)).
+  Operators act in their existing tools; this surface only *tells them what to act on*.
+
+Also deliberately **not** done: model-written prose (the output is templated from grounded
+fields so it can't invent), and parsing the night-log's shift date from prose (it's supplied to
+the loader as data, which is how real logs would carry it).
 
 ## Reconciliation across nights
 
