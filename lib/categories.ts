@@ -115,7 +115,7 @@ export function flagsForJsonEvent(type: string, description: string): EventFlag[
   }
 
   // A money proposal without the backing it needs (e.g. damage fee, no photos/approval).
-  if (/no photos|no manager approval|not yet|no approval on record|proposes charging/.test(d)) {
+  if (/no photos|no manager approval|no approval on record|proposes charging/.test(d)) {
     flags.push("incomplete_evidence")
   }
 
