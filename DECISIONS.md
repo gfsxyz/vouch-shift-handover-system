@@ -30,10 +30,20 @@ filled in as decisions land; sections marked _pending_ are completed during/afte
 
 ## What was built — and what was deliberately skipped
 
-_Pending build._ Skipped by design (per brief): authentication, user/account management,
-admin dashboards, multi-hotel support, persistence beyond in-memory, production
-infra/scaling, and visual polish. The budget goes to normalization, cross-night
-reconciliation, grounding, and evidence traceability.
+**Built:** a deterministic reconciliation engine (shift windowing → `(room, category)`
+threading across both sources → per-thread state machine → window classification), an
+evidence-first handover assembler with a fail-closed grounding pass, a single Sonnet 4.6
+extraction step (Zod, temp 0, content-hash cached, injection-hardened), `GET /api/handover`
+and `GET /api/debug`, a server-rendered view with per-item evidence drawers, structured
+per-thread decision logs to stdout, and a 39-test suite (windowing first, then threading,
+reconciliation, contradictions, injection, and grounding/fail-closed).
+
+**Skipped by design** (per brief — "we are NOT testing" volume/polish/auth): authentication,
+accounts, multi-hotel routing, any database (in-memory only), scaling/infra, and visual
+polish. Also deliberately **not** done: model-written prose (the output is templated from
+grounded fields so it can't invent), and parsing the night-log's shift date from prose (it's
+supplied to the loader as data, which is how real logs would carry it). The budget went where
+the brief said it cares most: reconciliation and grounding.
 
 ## Reconciliation across nights
 
@@ -61,15 +71,44 @@ source snippet ([ADR 0003](docs/adr/0003-llm-scope.md)). Contradictions (205, 31
 
 ## Where AI helped most / got in the way
 
-_Pending build._
+**Helped most:** the multilingual, contradiction-laden night log — exactly where rules are
+brittle. Sonnet read the mixed EN/中文 prose and pulled out that the 312 no-show was *settled*,
+that the 205 line *contradicts the system*, that the 208 safe-box guest flies out in the
+morning, and that the 3am wifi call is *unconfirmed* — each as a typed field with a verbatim
+snippet. Confining the model to that one extraction boundary meant all the trust-critical work
+(threading, state, open/resolved decisions) stayed deterministic and testable.
+
+**Got in the way:** the temptation to let the model do more. An earlier instinct was to have it
+write the handover prose or decide thread membership — both reintroduce a hallucination surface
+on the part the brief cares about most. The discipline that paid off was making grounding
+*structural* (drop any extraction whose snippet isn't in the log; assemble output only from
+typed evidence; fail closed on a dangling id) rather than *prompted* ("please cite your
+sources"). A smaller annoyance: keyword heuristics on free text are easy to over-fit — an early
+`incomplete_evidence` regex matched evt_0010's "NOT yet charged" and mis-flagged the no-show;
+caught by a test, then tightened.
 
 ## What I'd do in hours 3–6
 
-_Pending — captured at end of session._
+- **Per-thread grounded summaries (ADR 0003, option 2):** swap the templated lead line for a
+  model-written summary *constrained to the thread's evidence snippets*, with a post-check that
+  every sentence's facts appear in the evidence — better prose without loosening grounding.
+- **Property-test the windowing/classification** across random dates/timezones, and add a DST
+  hotel to prove the offset handling generalizes beyond `+08:00`.
+- **Confidence + provenance on extractions**, and a `/api/debug` diff view so an operator can
+  see *what changed* between last night's handover and tonight's.
+- **Golden-file regression** on the full handover JSON per date, so any pipeline change shows up
+  as a reviewable diff.
 
 ## One thing that surprised me
 
-_Pending — captured at end of session._
+How much of the "AI problem" turned out to be a **boring data-modeling problem**. Once the
+shift window and the `(room, category)` thread key were pinned down, the hardest graded
+behaviors — *resolved tonight vs already-resolved*, *settled-then-disputed*, *two sources
+disagree* — fell out of one rule: **classify a thread only from the events visible before
+07:00, and never let a later conflict silently overwrite an earlier fact.** The 312 no-show
+demonstrates it perfectly: the *same thread* reads `resolved tonight` for `date=2026-05-28` and
+`contested` for `date=2026-05-29`, with no special-casing — just the window moving forward over
+an immutable event history.
 
 ---
 
